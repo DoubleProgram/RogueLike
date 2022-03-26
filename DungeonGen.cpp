@@ -452,3 +452,137 @@ void Generation::CleanDungeon() {
         }
     }
 }
+
+void Generation::SpawnEntities() {
+    //spawn player
+    int playerRoom = rand() % rooms.size();
+    POS p;
+    do {
+        int j = rand() % rooms[playerRoom].size();
+        p = rooms[playerRoom][j];
+    } while (map[p.x + borderUp + verticalShift][p.y + borderRight + horizontalShift] == Tile_Wall);
+    map[p.x + borderUp + verticalShift][p.y + borderRight + horizontalShift] = Tile_Player;
+    rooms.erase(rooms.begin() + playerRoom);
+
+
+    //spawning enemies
+    const int enemyDensity = 10 / 1;
+    for (int j = 0; j < rooms.size(); j++) {
+        int floors = 0;
+        for (int i = 0; i < rooms[j].size(); i++) {
+            POS p = POS(rooms[j][i].x + borderUp + verticalShift, rooms[j][i].y + borderRight + horizontalShift);
+            if (map[p.x][p.y] != Tile_Wall)
+                floors++;
+        }
+
+        int enemies = floors / enemyDensity;
+        int eamount = 0;
+        do {
+            int i = rand() % rooms[j].size();
+            POS p = POS(rooms[j][i].x + borderUp + verticalShift, rooms[j][i].y + borderRight + horizontalShift);
+            if (map[p.x][p.y] == Tile_Floor) {
+                eamount++;
+                map[p.x][p.y] = Tile_Enemy;
+            }
+        } while (eamount < enemies);
+    }
+}
+
+std::vector<std::string> Generation::get2DRenderMap() {
+    //adding the right walls for 2D renderer
+    std::vector<std::string> newMap = map;
+
+    auto OutOfBounds = [&](POS pos) {
+        return pos.y < 0 || pos.y > WIDTH || pos.x < 0 || pos.x > HEIGHT;
+    };
+
+    for (int x = 0; x < HEIGHT; x++) {
+        for (int y = 0; y < WIDTH; y++) {
+            if (map[x][y] == Tile_Wall) {
+                if (!OutOfBounds(POS(x - 1, y)) && map[x - 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x + 1, y)) && map[x + 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y - 1)) && map[x][y - 1] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y + 1)) && map[x][y + 1] == Tile_Wall) {
+                    newMap[x][y] = WX;
+                    continue;
+                }
+
+                else if (!OutOfBounds(POS(x + 1, y)) && map[x + 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x - 1, y)) && map[x - 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y + 1)) && map[x][y + 1] == Tile_Wall) {
+                    newMap[x][y] = WDRU;
+                    continue;
+                }
+
+                else if (!OutOfBounds(POS(x + 1, y)) && map[x + 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x - 1, y)) && map[x - 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y - 1)) && map[x][y - 1] == Tile_Wall) {
+                    newMap[x][y] = WDLU;
+                    continue;
+                }
+
+                else if (!OutOfBounds(POS(x + 1, y)) && map[x + 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y + 1)) && map[x][y + 1] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y - 1)) && map[x][y - 1] == Tile_Wall) {
+                    newMap[x][y] = WRDL;
+                    continue;
+                }
+
+                else if (!OutOfBounds(POS(x - 1, y)) && map[x - 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y + 1)) && map[x][y + 1] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y - 1)) && map[x][y - 1] == Tile_Wall) {
+                    newMap[x][y] = WRUL;
+                    continue;
+                }
+
+                else if (!OutOfBounds(POS(x - 1, y)) && map[x - 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x + 1, y)) && map[x + 1][y] == Tile_Wall) {
+                    newMap[x][y] = WV;
+                }
+
+                else if (!OutOfBounds(POS(x, y - 1)) && map[x][y - 1] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y + 1)) && map[x][y + 1] == Tile_Wall) {
+                    newMap[x][y] = WH;
+                }
+
+                else if (
+                    !OutOfBounds(POS(x + 1, y)) && map[x + 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y - 1)) && map[x][y - 1] == Tile_Wall) {
+                    newMap[x][y] = WDL;
+                }
+
+                else if (!OutOfBounds(POS(x + 1, y)) && map[x + 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y + 1)) && map[x][y + 1] == Tile_Wall) {
+                    newMap[x][y] = WDR;
+                }
+
+                else if (!OutOfBounds(POS(x - 1, y)) && map[x - 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y - 1)) && map[x][y - 1] == Tile_Wall) {
+                    newMap[x][y] = WLU;
+                }
+
+                else if (!OutOfBounds(POS(x - 1, y)) && map[x - 1][y] == Tile_Wall &&
+                    !OutOfBounds(POS(x, y + 1)) && map[x][y + 1] == Tile_Wall) {
+                    newMap[x][y] = WRU;
+                }
+
+                else if (!OutOfBounds(POS(x - 1, y)) && map[x - 1][y] == Tile_Wall) {
+                    newMap[x][y] = WU;
+                }
+
+                else if (!OutOfBounds(POS(x + 1, y)) && map[x + 1][y] == Tile_Wall) {
+                    newMap[x][y] = WD;
+                }
+
+                else if (!OutOfBounds(POS(x, y - 1)) && map[x][y - 1] == Tile_Wall) {
+                    newMap[x][y] = WL;
+                }
+
+                else if (!OutOfBounds(POS(x, y + 1)) && map[x][y + 1] == Tile_Wall) {
+                    newMap[x][y] = WR;
+                }
+            }
+        }
+    }
+    return newMap;
+}
